@@ -460,10 +460,10 @@ def should_strip_part(x):
 
 
 class SourceInfo(object):
-    '''
+    """
     Helper for converting c++ data to python data, using info parsed from the
     source
-    '''
+    """
     def __init__(self, srcdir, verbose=False):
         self.srcdir = expandpath(srcdir)
         self._valid_modules = None
@@ -471,9 +471,9 @@ class SourceInfo(object):
         self.verbose = verbose
 
     def get_valid_modules(self):
-        '''
+        """
         get a cached list of modules from the source
-        '''
+        """
         if self._valid_modules is None:
             macro_dir = os.path.join(self.srcdir, 'cmake/macros')
             if not os.path.exists(macro_dir):
@@ -489,10 +489,10 @@ class SourceInfo(object):
         return self._valid_modules
 
     def get_implicitly_convertible_types(self):
-        '''
+        """
         inspect the boost-python code to parse the rules for implicitly
         convertible types
-        '''
+        """
         # FIXME: add module prefixes to all types (Output, Input, Parameter, etc are not prefixed)
         # FIXME: parse other conversions defined using TfPyContainerConversions
         if self._implicitly_convertible_types is None:
@@ -711,7 +711,7 @@ def convert_xml(path, srcdir, verbose=False, modules=None):
         return parts
 
     def get_member_doc(parts, doc, member=None):
-        '''
+        """
         Parameters
         ----------
         parts : List[str]
@@ -725,7 +725,7 @@ def convert_xml(path, srcdir, verbose=False, modules=None):
         -------
         Dict
             the member document
-        '''
+        """
         if member:
             parts = parts + [member]
 
@@ -831,9 +831,9 @@ def convert_xml(path, srcdir, verbose=False, modules=None):
 
 
 def iter_xml_files(xmldir):
-    '''
+    """
     iterate over all xml files in `xmldir`
-    '''
+    """
     for name in sorted(glob.glob(os.path.join(xmldir, '*.xml'))):
         basename = os.path.split(name)[1]
         if basename.startswith('class') or basename.endswith('8h.xml'):
@@ -862,14 +862,14 @@ def merge_dict(d1, d2):
 
 
 def process_xml(xmldir, srcdir, processes=DEFAULT_NUM_PROCS, verbose=False):
-    '''
+    """
     walk through xml files and covert those pertaining to classes
 
     Returns
     -------
     Dict[str, Any]
         hierarchy of member data
-    '''
+    """
     if isinstance(verbose, basestring):
         # for now convert_xml does not support controlling verbosity at the
         # member level.
@@ -921,7 +921,8 @@ def makestubs(outputdir, xmldir, srcdir, force_update=False,
     if force_update or not os.path.exists(jsonfile):
         if not os.path.exists(outputdir):
             os.makedirs(outputdir)
-        print("processing xml data (force update %s)" % ('ON' if force_update else 'OFF'))
+        print("processing xml data (force update %s)" % 
+              ('ON' if force_update else 'OFF'))
         type_data = process_xml(xmldir, srcdir, processes=processes,
                                 verbose=verbose)
 
@@ -935,7 +936,11 @@ def makestubs(outputdir, xmldir, srcdir, force_update=False,
             type_data = json.load(f)
 
     # create the stubs
-    import maintenance.stubs
+    try:
+        import maintenance.stubs as stubs
+    except ImportError:
+        import stubs
+
     # Notes: 
     #  - UsdHdydra causes stubgen to crash
     #  - Usdviewq is pure python, except for _usdviewq.so which contains only a few
@@ -943,7 +948,7 @@ def makestubs(outputdir, xmldir, srcdir, force_update=False,
     #  - the last bit of the regex hides any modules starting with an underscore.
     #    the contents of these modules is imported into the __init__.py files, so we 
     #    don't need separate stubs for them.
-    maintenance.stubs.packagestubs(
+    stubs.packagestubs(
         'pxr', outputdir=outputdir,  extensions=('pyi',),
         type_data=type_data,
         skip_module_regex="pxr[.](UsdMaya|UsdHydra|Usdviewq|Tf.testenv|(.*[.]_.*))")
